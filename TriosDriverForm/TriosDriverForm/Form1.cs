@@ -11,6 +11,7 @@ using System.Threading;
 using System.Web;
 using System.Net;
 using System.Xml;
+using System.Xml.Serialization;
 
 namespace TriosDriverForm
 {
@@ -22,7 +23,7 @@ namespace TriosDriverForm
         WebServerImpl web = new WebServerImpl("80");
         
         byte[] buffer = new byte[4096];
-        ushort[] vals = new ushort[42];
+        ushort[] vals = new ushort[6];
         int idx = 0;
 
         
@@ -88,19 +89,41 @@ namespace TriosDriverForm
 
         private void bReadBytes_Click(object sender, EventArgs e)
         {
-            int l = 0;
-            
-            string[] list = new string[4096];
 
+            TriosModel c = new TriosModel();
+            Cortex[] cortex = new Cortex[4];
+
+            // 1
+            cortex[0] = new Cortex("Cortex1");
+            c.addCortex(cortex[0]);
+            Buffer.BlockCopy(buffer, 4, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT1",vals));
+            Buffer.BlockCopy(buffer, 16, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT2",vals));
+            Buffer.BlockCopy(buffer, 28, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT3",vals));
+            Buffer.BlockCopy(buffer, 40, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT4",vals));
+            Buffer.BlockCopy(buffer, 52, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT5",vals));
+            Buffer.BlockCopy(buffer, 64, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT6",vals));
+            // 2
+            cortex[1] = new Cortex("Cortex2");
+            c.addCortex(cortex[1]);
            
-            Buffer.BlockCopy(buffer, 4, vals, 0, 84);
-                        
-            foreach (ushort b in vals){
-                list[l] = Convert.ToString(l) + " -> " + Convert.ToString(b,10);
-                l++;
-            }
+            cortex[1].addLight(new Light());
+            cortex[1].addLight(new Light());
+            cortex[1].addLight(new Light());
+            cortex[1].addLight(new Light());
+            cortex[1].addLight(new Light());
+            cortex[1].addLight(new Light());
 
-            textStatus.Lines = list;
+            XmlSerializer s = new XmlSerializer(typeof(TriosModel));
+            System.IO.TextWriter w = new System.IO.StreamWriter(@"C:\model.xml");
+           
+            s.Serialize(w, c);
+            w.Close();
 
             web.Stop();
 

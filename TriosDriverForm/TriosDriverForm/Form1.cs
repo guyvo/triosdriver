@@ -12,6 +12,7 @@ using System.Web;
 using System.Net;
 using System.Xml;
 using System.Xml.Serialization;
+using System.IO;
 
 namespace TriosDriverForm
 {
@@ -20,7 +21,7 @@ namespace TriosDriverForm
        
 
         ManualResetEvent manualEvent = new ManualResetEvent(false);
-        WebServerImpl web = new WebServerImpl("80");
+        WebServerImpl web = new WebServerImpl("8080");
         
         byte[] buffer = new byte[4096];
         ushort[] vals = new ushort[6];
@@ -108,24 +109,19 @@ namespace TriosDriverForm
             cortex[0].addLight(new Light("OUT5",vals));
             Buffer.BlockCopy(buffer, 64, vals, 0, 12);
             cortex[0].addLight(new Light("OUT6",vals));
-            // 2
-            cortex[1] = new Cortex("Cortex2");
-            c.addCortex(cortex[1]);
-           
-            cortex[1].addLight(new Light());
-            cortex[1].addLight(new Light());
-            cortex[1].addLight(new Light());
-            cortex[1].addLight(new Light());
-            cortex[1].addLight(new Light());
-            cortex[1].addLight(new Light());
-
+  
             XmlSerializer s = new XmlSerializer(typeof(TriosModel));
             System.IO.TextWriter w = new System.IO.StreamWriter(@"C:\model.xml");
            
             s.Serialize(w, c);
-            w.Close();
 
-            web.Stop();
+
+            w.Close();
+            TextReader reader = new StreamReader(@"C:\model.xml");
+            TriosModel model = (TriosModel)  s.Deserialize(reader);
+            reader.Close();
+
+            //web.Stop();
 
         }
     }

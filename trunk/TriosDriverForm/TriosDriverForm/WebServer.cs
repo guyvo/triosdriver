@@ -73,21 +73,21 @@ namespace TriosDriverForm
             HttpListenerResponse res;
             System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
             byte[] r;
-            string msg = "";
+            
 
-            msg = context.Request.HttpMethod +
-                 System.Environment.NewLine +
-                 context.Request.UserHostAddress +
-                 System.Environment.NewLine +
-                 context.Request.ContentLength64 +
-                 System.Environment.NewLine +
-                 context.Request.ContentEncoding;
-
-            r = encoding.GetBytes(msg);
-            res = context.Response;
-            res.ContentLength64 = r.Length;
-            res.OutputStream.Write(r, 0, r.Length);
-            res.OutputStream.Close();
+            if (context.Request.HttpMethod == "GET")
+            {
+                TextReader reader = new StreamReader(@"C:\model.xml");
+                r = encoding.GetBytes(reader.ReadToEnd());
+                res = context.Response;
+                res.ContentLength64 = r.Length;
+                res.ContentType = "text/xml";
+                res.OutputStream.Write(r, 0, r.Length);
+                res.OutputStream.Close();
+                reader.Close();
+                context.Response.Close();
+            }
+ 
         }
     }
 }

@@ -70,21 +70,37 @@ namespace TriosDriverForm
 
         protected override void handleRequest(HttpListenerContext context)
         {
-            HttpListenerResponse res;
-            System.Text.ASCIIEncoding encoding = new System.Text.ASCIIEncoding();
-            byte[] r;
             
+            string theData;
 
             if (context.Request.HttpMethod == "GET")
             {
                 TextReader reader = new StreamReader(@"C:\model.xml");
-                r = encoding.GetBytes(reader.ReadToEnd());
-                res = context.Response;
-                res.ContentLength64 = r.Length;
-                res.ContentType = "text/xml";
-                res.OutputStream.Write(r, 0, r.Length);
-                res.OutputStream.Close();
+                System.IO.TextWriter w = new System.IO.StreamWriter(context.Response.OutputStream);
+
+                theData = reader.ReadToEnd(); 
+                context.Response.ContentLength64 = theData.Length;
+                context.Response.ContentType = "text/xml";
+                w.Write(theData);
+                w.Flush();
+                
                 reader.Close();
+                w.Close();
+                context.Response.Close();
+            }
+            else if (context.Request.HttpMethod == "POST")
+            {
+                
+                TextWriter w = new StreamWriter(@"C:\fx.xml");
+                TextReader reader = new StreamReader(context.Request.InputStream);
+
+                w.Write(reader.ReadToEnd());
+                w.Close();
+
+                context.Response.ContentType = "text/xml";
+                context.Response.StatusCode = 200;
+                context.Response.ContentLength64 = 0;
+                
                 context.Response.Close();
             }
  

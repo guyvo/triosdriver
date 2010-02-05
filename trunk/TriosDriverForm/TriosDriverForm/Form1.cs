@@ -117,7 +117,7 @@ namespace TriosDriverForm
 
 
             w.Close();
-            TextReader reader = new StreamReader(@"C:\model.xml");
+            TextReader reader = new StreamReader(@"C:\fx.xml");
             TriosModel model = (TriosModel)  s.Deserialize(reader);
             reader.Close();
 

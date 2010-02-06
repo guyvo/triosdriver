@@ -6,6 +6,9 @@ using System.Threading;
 using System.Net;
 using System.Windows.Forms;
 using System.IO;
+using System.IO.Ports;
+using System.Xml.Serialization;
+using System.Xml;
 
 namespace TriosDriverForm
 {
@@ -62,48 +65,182 @@ namespace TriosDriverForm
        
     }
     //
-    public class WebServerImpl : WebServer
+    public class WebServerImpl : WebServer ,ISerial
     {
-        public WebServerImpl(string port): base ( port){
-          
+        const int maxBUFFER = 4096;
+
+        ISerial serialPort;
+
+        SerialPort theSerialPort;
+        ManualResetEvent manualEvent = new ManualResetEvent(false);
+        string _serialportname;
+
+        byte[] buffer = new byte[maxBUFFER];
+        int idx = 0;
+
+        public WebServerImpl(string webportname, string serialportname)
+            : base(webportname)
+        {
+            _serialportname = serialportname;
+            serialPort = this;
         } 
 
         protected override void handleRequest(HttpListenerContext context)
         {
-            
             string theData;
 
             if (context.Request.HttpMethod == "GET")
             {
-                TextReader reader = new StreamReader(@"C:\model.xml");
-                System.IO.TextWriter w = new System.IO.StreamWriter(context.Response.OutputStream);
+                TextWriter writer = new StreamWriter(context.Response.OutputStream);
+                
+                serialPort.Open(_serialportname);
 
-                theData = reader.ReadToEnd(); 
+                buffer[0] = 2;
+                buffer[1] = 16;
+                buffer[2] = 0;
+                buffer[3] = 84;
+
+                serialPort.Send(buffer);
+
+                theData = ProcessRefresh();
+                
                 context.Response.ContentLength64 = theData.Length;
                 context.Response.ContentType = "text/xml";
-                w.Write(theData);
-                w.Flush();
-                
-                reader.Close();
-                w.Close();
+                writer.Write(theData);
+                writer.Flush();
+                writer.Close();
                 context.Response.Close();
+
+                serialPort.Close();
+
             }
+
             else if (context.Request.HttpMethod == "POST")
             {
-                
-                TextWriter w = new StreamWriter(@"C:\fx.xml");
-                TextReader reader = new StreamReader(context.Request.InputStream);
+               
+                ProcessUpdate(context.Request.InputStream);
 
-                w.Write(reader.ReadToEnd());
-                w.Close();
+                buffer[0] = 1;
+                buffer[1] = 32;
+                buffer[2] = 0;
+                buffer[3] = 84;
+
+                serialPort.Open(_serialportname);
+                serialPort.Send(buffer);
 
                 context.Response.ContentType = "text/xml";
                 context.Response.StatusCode = 200;
                 context.Response.ContentLength64 = 0;
                 
                 context.Response.Close();
+
+                serialPort.Close();
             }
  
         }
+
+        #region ISerial Members
+
+        void ISerial.Open(string port)
+        {
+            theSerialPort = new SerialPort(port);
+            theSerialPort.BaudRate = 4500000;
+            theSerialPort.WriteBufferSize = maxBUFFER;
+            theSerialPort.ReadBufferSize = maxBUFFER;
+            theSerialPort.DataReceived += new SerialDataReceivedEventHandler(DataReceived);
+            theSerialPort.Open();
+        }
+
+        void ISerial.Send(byte[] data)
+        {
+            if (data.Length <= maxBUFFER)
+            {
+                theSerialPort.Write(data, 0, data.Length);
+                manualEvent.WaitOne();
+                idx = 0;
+                manualEvent.Reset();
+            }
+        }
+
+        void ISerial.Close()
+        {
+            theSerialPort.Close();
+        }
+
+        #endregion
+        
+        private string ProcessRefresh()
+        {
+            TriosModel triosModel = new TriosModel();
+            Cortex[] cortex = new Cortex[4];
+            ushort[] vals = new ushort[6];
+            string xmlData;
+
+            // 1
+            cortex[0] = new Cortex("Cortex1");
+            triosModel.addCortex(cortex[0]);
+            Buffer.BlockCopy(buffer, 4, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT1", vals));
+            Buffer.BlockCopy(buffer, 16, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT2", vals));
+            Buffer.BlockCopy(buffer, 28, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT3", vals));
+            Buffer.BlockCopy(buffer, 40, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT4", vals));
+            Buffer.BlockCopy(buffer, 52, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT5", vals));
+            Buffer.BlockCopy(buffer, 64, vals, 0, 12);
+            cortex[0].addLight(new Light("OUT6", vals));
+
+            XmlSerializer xmlModel = new XmlSerializer(typeof(TriosModel));
+            TextWriter writer = new StreamWriter(@"c:\refresh.xml");
+            xmlModel.Serialize(writer, triosModel);
+            writer.Flush();
+            writer.Close();
+
+            TextReader reader = new StreamReader(@"c:\refresh.xml");
+            xmlData = reader.ReadToEnd();
+            reader.Close();
+
+            return xmlData;      
+        }
+
+        private void ProcessUpdate(Stream post)
+        {
+            ushort[] vals = new ushort[6];
+
+            XmlSerializer xmlModel = new XmlSerializer(typeof(TriosModel));
+            TriosModel triosModel = (TriosModel)xmlModel.Deserialize(post);
+
+
+            Cortex name = (Cortex)triosModel.arrayCortex[0];
+
+            for (int i = 0; i < name.arrayLights.Count; i++) 
+            {
+                Light light = (Light) name.arrayLights[i];
+
+                vals[0] = light.val;
+                vals[1] = light.min;
+                vals[2] = light.max;
+                vals[3] = light.step;
+                vals[4] = light.pinin;
+                vals[5] = light.pinout;
+
+                Buffer.BlockCopy(vals, 0, buffer , 4 + (i * 12) , 12);
+            }
+            
+        }
+
+        private void DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            int temp;
+
+            temp = theSerialPort.Read(buffer, idx, buffer.Length - idx);
+            idx += temp;
+            if (idx == buffer.Length)
+                manualEvent.Set();
+        }
+
+        
     }
 }

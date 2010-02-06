@@ -1,6 +1,6 @@
 ﻿namespace TriosDriverForm
 {
-    partial class Form1
+    partial class TriosDriverGui
     {
         /// <summary>
         /// Required designer variable.

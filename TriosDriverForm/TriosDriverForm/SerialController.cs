@@ -60,6 +60,17 @@ namespace TriosDriverForm
         }
     
         protected abstract void ProcessData ( );
+
+        public int isReceived
+        {
+            get
+            {
+                throw new System.NotImplementedException();
+            }
+            set
+            {
+            }
+        }
         
     }
 }

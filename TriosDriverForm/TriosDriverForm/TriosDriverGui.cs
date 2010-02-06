@@ -16,11 +16,11 @@ using System.IO;
 
 namespace TriosDriverForm
 {
-    public partial class Form1 : Form 
+    public partial class TriosDriverGui : Form 
     {
         WebServerImpl web;
 
-        public Form1()
+        public TriosDriverGui()
         {
             InitializeComponent();
         }

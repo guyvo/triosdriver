@@ -228,6 +228,7 @@ namespace TriosDriverForm
 
                 Buffer.BlockCopy(vals, 0, buffer , 4 + (i * 12) , 12);
             }
+           
             
         }
 

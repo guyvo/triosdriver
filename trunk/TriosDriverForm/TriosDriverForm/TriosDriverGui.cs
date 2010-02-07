@@ -28,7 +28,7 @@ namespace TriosDriverForm
 
         private void bOpenSerialPort_Click(object sender, EventArgs e)
         {
-            web = new WebServerImpl("8080",textComPort.Text);
+            web = new WebServerImpl(textTCPPort.Text,textComPort.Text);
             web.Start();
            
         }

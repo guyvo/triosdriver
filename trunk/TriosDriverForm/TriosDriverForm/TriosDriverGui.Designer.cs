@@ -30,6 +30,7 @@
         {
             this.bOpenSerialPort = new System.Windows.Forms.Button();
             this.textComPort = new System.Windows.Forms.TextBox();
+            this.textTCPPort = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // bOpenSerialPort
@@ -50,14 +51,23 @@
             this.textComPort.TabIndex = 5;
             this.textComPort.Text = "COM3";
             // 
-            // Form1
+            // textTCPPort
+            // 
+            this.textTCPPort.Location = new System.Drawing.Point(149, 73);
+            this.textTCPPort.Name = "textTCPPort";
+            this.textTCPPort.Size = new System.Drawing.Size(49, 20);
+            this.textTCPPort.TabIndex = 6;
+            this.textTCPPort.Text = "8080";
+            // 
+            // TriosDriverGui
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(266, 105);
+            this.ClientSize = new System.Drawing.Size(266, 161);
+            this.Controls.Add(this.textTCPPort);
             this.Controls.Add(this.textComPort);
             this.Controls.Add(this.bOpenSerialPort);
-            this.Name = "Form1";
+            this.Name = "TriosDriverGui";
             this.Text = "Form1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.ResumeLayout(false);
@@ -69,6 +79,7 @@
 
         private System.Windows.Forms.Button bOpenSerialPort;
         private System.Windows.Forms.TextBox textComPort;
+        private System.Windows.Forms.TextBox textTCPPort;
     }
 }
 

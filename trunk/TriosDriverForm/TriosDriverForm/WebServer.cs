@@ -20,7 +20,7 @@ namespace TriosDriverForm
         public WebServer(string port)
         {
             this._httpListener = new HttpListener();
-            _httpListener.Prefixes.Add("http://*:" + port + "/");
+            _httpListener.Prefixes.Add("http://localhost:" + port + "/");
          }
 
         public void Start() {

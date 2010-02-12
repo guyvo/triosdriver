@@ -35,8 +35,8 @@ namespace TriosDriverForm
  
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            web.Stop();
+            if ( web != null )
+                web.Stop();
         }
-    
     }
 }

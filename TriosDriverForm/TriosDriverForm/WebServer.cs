@@ -20,7 +20,7 @@ namespace TriosDriverForm
         public WebServer(string port)
         {
             this._httpListener = new HttpListener();
-            _httpListener.Prefixes.Add("http://localhost:" + port + "/");
+            _httpListener.Prefixes.Add("http://*:" + port + "/");
          }
 
         public void Start() {
@@ -96,9 +96,24 @@ namespace TriosDriverForm
                 serialPort.Open(_serialportname);
 
                 buffer[0] = 2;
-                buffer[1] = 16;
+                buffer[1] = 0x10;
                 buffer[2] = 0;
                 buffer[3] = 84;
+
+                buffer[256] = 2;
+                buffer[257] = 0x30;
+                buffer[258] = 0;
+                buffer[259] = 84;
+
+                buffer[512] = 2;
+                buffer[513] = 0x50;
+                buffer[514] = 0;
+                buffer[515] = 84;
+
+                buffer[768] = 2;
+                buffer[769] = 0x70;
+                buffer[770] = 0;
+                buffer[771] = 84;
 
                 serialPort.Send(buffer);
 
@@ -118,12 +133,29 @@ namespace TriosDriverForm
             else if (context.Request.HttpMethod == "POST")
             {
                
-                ProcessUpdate(context.Request.InputStream);
+                
 
                 buffer[0] = 1;
-                buffer[1] = 32;
+                buffer[1] = 0x20;
                 buffer[2] = 0;
                 buffer[3] = 84;
+
+                buffer[256] = 1;
+                buffer[257] = 0x40;
+                buffer[258] = 0;
+                buffer[259] = 84;
+
+                buffer[512] = 1;
+                buffer[513] = 0x60;
+                buffer[514] = 0;
+                buffer[515] = 84;
+
+                buffer[768] = 1;
+                buffer[769] = 0x80;
+                buffer[770] = 0;
+                buffer[771] = 84;
+
+                ProcessUpdate(context.Request.InputStream);
 
                 serialPort.Open(_serialportname);
                 serialPort.Send(buffer);
@@ -131,8 +163,9 @@ namespace TriosDriverForm
                 context.Response.ContentType = "text/xml";
                 context.Response.StatusCode = 200;
                 context.Response.ContentLength64 = 0;
-                
-                context.Response.Close();
+                context.Response.AddHeader("header1", "test");
+
+                //context.Response.Close();
 
                 serialPort.Close();
             }
@@ -171,27 +204,29 @@ namespace TriosDriverForm
         
         private string ProcessRefresh()
         {
+            
             TriosModel triosModel = new TriosModel();
             Cortex[] cortex = new Cortex[4];
             ushort[] vals = new ushort[6];
             string xmlData;
 
-            // 1
-            cortex[0] = new Cortex("Cortex1");
-            triosModel.addCortex(cortex[0]);
-            Buffer.BlockCopy(buffer, 4, vals, 0, 12);
-            cortex[0].addLight(new Light("OUT1", vals));
-            Buffer.BlockCopy(buffer, 16, vals, 0, 12);
-            cortex[0].addLight(new Light("OUT2", vals));
-            Buffer.BlockCopy(buffer, 28, vals, 0, 12);
-            cortex[0].addLight(new Light("OUT3", vals));
-            Buffer.BlockCopy(buffer, 40, vals, 0, 12);
-            cortex[0].addLight(new Light("OUT4", vals));
-            Buffer.BlockCopy(buffer, 52, vals, 0, 12);
-            cortex[0].addLight(new Light("OUT5", vals));
-            Buffer.BlockCopy(buffer, 64, vals, 0, 12);
-            cortex[0].addLight(new Light("OUT6", vals));
-
+            for ( int c = 0, idx = 0 ; c < 4 ; c++ , idx += 256 ){
+                cortex[c] = new Cortex("Cortex" + c);
+                triosModel.addCortex(cortex[c]);
+                Buffer.BlockCopy(buffer, 4 + idx, vals, 0, 12);
+                cortex[c].addLight(new Light("OUT1", vals));
+                Buffer.BlockCopy(buffer, 16 + idx, vals, 0, 12);
+                cortex[c].addLight(new Light("OUT2", vals));
+                Buffer.BlockCopy(buffer, 28 + idx, vals, 0, 12);
+                cortex[c].addLight(new Light("OUT3", vals));
+                Buffer.BlockCopy(buffer, 40 + idx, vals, 0, 12);
+                cortex[c].addLight(new Light("OUT4", vals));
+                Buffer.BlockCopy(buffer, 52 + idx, vals, 0, 12);
+                cortex[c].addLight(new Light("OUT5", vals));
+                Buffer.BlockCopy(buffer, 64 + idx, vals, 0, 12);
+                cortex[c].addLight(new Light("OUT6", vals));
+            }
+        
             XmlSerializer xmlModel = new XmlSerializer(typeof(TriosModel));
             TextWriter writer = new StreamWriter(@"c:\refresh.xml");
             xmlModel.Serialize(writer, triosModel);
@@ -212,23 +247,24 @@ namespace TriosDriverForm
             XmlSerializer xmlModel = new XmlSerializer(typeof(TriosModel));
             TriosModel triosModel = (TriosModel)xmlModel.Deserialize(post);
 
-
-            Cortex name = (Cortex)triosModel.arrayCortex[0];
-
-            for (int i = 0; i < name.arrayLights.Count; i++) 
+            for (int c = 0 , idx = 0; c < triosModel.arrayCortex.Count; c++ , idx +=256 )
             {
-                Light light = (Light) name.arrayLights[i];
+                Cortex name = (Cortex)triosModel.arrayCortex[c];
 
-                vals[0] = light.val;
-                vals[1] = light.min;
-                vals[2] = light.max;
-                vals[3] = light.step;
-                vals[4] = light.pinin;
-                vals[5] = light.pinout;
+                for (int i = 0; i < name.arrayLights.Count; i++)
+                {
+                    Light light = (Light)name.arrayLights[i];
 
-                Buffer.BlockCopy(vals, 0, buffer , 4 + (i * 12) , 12);
+                    vals[0] = light.val;
+                    vals[1] = light.min;
+                    vals[2] = light.max;
+                    vals[3] = light.step;
+                    vals[4] = light.pinin;
+                    vals[5] = light.pinout;
+
+                    Buffer.BlockCopy(vals, 0, buffer, 4 + (i * 12) + idx , 12);
+                }
             }
-           
             
         }
 

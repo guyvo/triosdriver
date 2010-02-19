@@ -47,17 +47,19 @@
             // 
             this.textComPort.Location = new System.Drawing.Point(148, 38);
             this.textComPort.Name = "textComPort";
-            this.textComPort.Size = new System.Drawing.Size(49, 20);
+            this.textComPort.Size = new System.Drawing.Size(39, 20);
             this.textComPort.TabIndex = 5;
             this.textComPort.Text = "COM3";
+            this.textComPort.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // textTCPPort
             // 
             this.textTCPPort.Location = new System.Drawing.Point(149, 73);
             this.textTCPPort.Name = "textTCPPort";
-            this.textTCPPort.Size = new System.Drawing.Size(49, 20);
+            this.textTCPPort.Size = new System.Drawing.Size(38, 20);
             this.textTCPPort.TabIndex = 6;
             this.textTCPPort.Text = "8080";
+            this.textTCPPort.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // TriosDriverGui
             // 

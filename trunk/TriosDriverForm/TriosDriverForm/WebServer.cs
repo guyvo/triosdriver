@@ -69,11 +69,14 @@ namespace TriosDriverForm
     {
         const int maxBUFFER = 4096;
 
+        
         ISerial serialPort;
 
         SerialPort theSerialPort;
         ManualResetEvent manualEvent = new ManualResetEvent(false);
         string _serialportname;
+
+        string amountOfCortex;
 
         byte[] buffer = new byte[maxBUFFER];
         int idx = 0;
@@ -88,32 +91,49 @@ namespace TriosDriverForm
         protected override void handleRequest(HttpListenerContext context)
         {
             string theData;
+            
 
+            amountOfCortex = context.Request.Headers.Get("cortex");
+
+            Array.Clear(buffer, 0, buffer.Length);
+            
             if (context.Request.HttpMethod == "GET")
             {
                 TextWriter writer = new StreamWriter(context.Response.OutputStream);
-                
+
                 serialPort.Open(_serialportname);
 
-                buffer[0] = 2;
-                buffer[1] = 0x10;
-                buffer[2] = 0;
-                buffer[3] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 0)
+                {
+                    buffer[0] = 2;
+                    buffer[1] = 0x10;
+                    buffer[2] = 0;
+                    buffer[3] = 84;
+                }
 
-                buffer[256] = 2;
-                buffer[257] = 0x30;
-                buffer[258] = 0;
-                buffer[259] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 1)
+                {
+                    buffer[256] = 2;
+                    buffer[257] = 0x30;
+                    buffer[258] = 0;
+                    buffer[259] = 84;
+                }
 
-                buffer[512] = 2;
-                buffer[513] = 0x50;
-                buffer[514] = 0;
-                buffer[515] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 2)
+                {
+                    buffer[512] = 2;
+                    buffer[513] = 0x50;
+                    buffer[514] = 0;
+                    buffer[515] = 84;
+                }
 
-                buffer[768] = 2;
-                buffer[769] = 0x70;
-                buffer[770] = 0;
-                buffer[771] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 3)
+                {
+                    buffer[768] = 2;
+                    buffer[769] = 0x70;
+                    buffer[770] = 0;
+                    buffer[771] = 84;
+                }
 
                 serialPort.Send(buffer);
 
@@ -132,28 +152,38 @@ namespace TriosDriverForm
 
             else if (context.Request.HttpMethod == "POST")
             {
-               
-                
 
-                buffer[0] = 1;
-                buffer[1] = 0x20;
-                buffer[2] = 0;
-                buffer[3] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 0)
+                {
+                    buffer[0] = 1;
+                    buffer[1] = 0x20;
+                    buffer[2] = 0;
+                    buffer[3] = 84;
+                }
 
-                buffer[256] = 1;
-                buffer[257] = 0x40;
-                buffer[258] = 0;
-                buffer[259] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 1)
+                {
+                    buffer[256] = 1;
+                    buffer[257] = 0x40;
+                    buffer[258] = 0;
+                    buffer[259] = 84;
+                }
 
-                buffer[512] = 1;
-                buffer[513] = 0x60;
-                buffer[514] = 0;
-                buffer[515] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 2)
+                {
+                    buffer[512] = 1;
+                    buffer[513] = 0x60;
+                    buffer[514] = 0;
+                    buffer[515] = 84;
+                }
 
-                buffer[768] = 1;
-                buffer[769] = 0x80;
-                buffer[770] = 0;
-                buffer[771] = 84;
+                if (Convert.ToInt32(amountOfCortex) > 3)
+                {
+                    buffer[768] = 1;
+                    buffer[769] = 0x80;
+                    buffer[770] = 0;
+                    buffer[771] = 84;
+                }
 
                 ProcessUpdate(context.Request.InputStream);
 
@@ -163,9 +193,9 @@ namespace TriosDriverForm
                 context.Response.ContentType = "text/xml";
                 context.Response.StatusCode = 200;
                 context.Response.ContentLength64 = 0;
-                context.Response.AddHeader("header1", "test");
-
-                //context.Response.Close();
+                context.Response.AddHeader("status", "done");
+                context.Response.OutputStream.Write(buffer, 0, 0);
+                
 
                 serialPort.Close();
             }
@@ -206,12 +236,12 @@ namespace TriosDriverForm
         {
             
             TriosModel triosModel = new TriosModel();
-            Cortex[] cortex = new Cortex[4];
+            Cortex[] cortex = new Cortex[Convert.ToInt32(amountOfCortex)];
             ushort[] vals = new ushort[6];
             string xmlData;
 
-            for ( int c = 0, idx = 0 ; c < 4 ; c++ , idx += 256 ){
-                cortex[c] = new Cortex("Cortex" + c);
+            for ( int c = 0, idx = 0 ; c < cortex.Length ; c++ , idx += 256 ){
+                cortex[c] = new Cortex("Cortex" + (c+1));
                 triosModel.addCortex(cortex[c]);
                 Buffer.BlockCopy(buffer, 4 + idx, vals, 0, 12);
                 cortex[c].addLight(new Light("OUT1", vals));

@@ -10,18 +10,27 @@ using System.IO.Ports;
 using System.Xml.Serialization;
 using System.Xml;
 
+
 namespace TriosDriverForm
 {
     abstract public class WebServer
     {
-        protected static AutoResetEvent listenForNextRequest = new AutoResetEvent(false); 
+         
         private HttpListener _httpListener;
+        protected static AutoResetEvent listenForNextRequest = new AutoResetEvent(false);
+        protected String htmlErrorString = 
+            "<html><h1>Bad request because you didn't say the magic word !<//h1><//html>";
+
+        protected FileStream myLog;
+        protected TextWriter writeLog;
 
         public WebServer(string port)
         {
             this._httpListener = new HttpListener();
             _httpListener.Prefixes.Add("http://*:" + port + "/");
-         }
+            myLog = new FileStream(".\\serverlog.log", FileMode.Append, FileAccess.Write);
+            writeLog = new StreamWriter(myLog);
+        }
 
         public void Start() {
             _httpListener.Start();
@@ -95,12 +104,34 @@ namespace TriosDriverForm
 
             amountOfCortex = context.Request.Headers.Get("cortex");
 
+            if ( amountOfCortex == null || amountOfCortex.Equals("") || Convert.ToInt32(amountOfCortex) > 4 || Convert.ToInt32(amountOfCortex) < 1)
+            {
+                TextWriter writer = new StreamWriter(context.Response.OutputStream);
+
+                writeLog.WriteLine("BAD REQUEST: " + context.Request.RemoteEndPoint.Address.ToString() + " " + context.Request.UserHostName);
+                writeLog.Flush();
+                context.Response.ContentType = "text/html";
+                context.Response.StatusCode = 400;
+                context.Response.ContentLength64 = htmlErrorString.Length;
+                context.Response.AddHeader("status", "bad request");
+                writer.Write(htmlErrorString);
+                writer.Close();
+                context.Request.InputStream.Close();
+                context.Response.OutputStream.Close();
+                
+                return;
+            }
+
+            writeLog.WriteLine("REQUEST OK: " + context.Request.RemoteEndPoint.Address.ToString() + " " + context.Request.UserHostName + " " + context.Request.HttpMethod);
+            writeLog.Flush();
+
             Array.Clear(buffer, 0, buffer.Length);
             
             if (context.Request.HttpMethod == "GET")
             {
                 TextWriter writer = new StreamWriter(context.Response.OutputStream);
 
+               
                 serialPort.Open(_serialportname);
 
                 if (Convert.ToInt32(amountOfCortex) > 0)

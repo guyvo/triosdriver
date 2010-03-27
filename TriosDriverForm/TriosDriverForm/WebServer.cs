@@ -36,6 +36,9 @@ namespace TriosDriverForm
             catch (IOException e)
             {
                 MessageBox.Show(e.Message);
+            }
+            finally
+            {
                 myLog.Close();
             }
         }
@@ -53,7 +56,14 @@ namespace TriosDriverForm
         }
 
         public void Stop() {
-            _httpListener.Stop();
+            try
+            {
+                _httpListener.Stop();
+            }
+            catch (Exception e)
+            {
+                return;
+            }
         }
 
         private void listen(object state)
@@ -146,105 +156,120 @@ namespace TriosDriverForm
             {
                 TextWriter writer = new StreamWriter(context.Response.OutputStream);
 
-               
-                serialPort.Open(_serialportname);
-
-                if (Convert.ToInt32(amountOfCortex) > 0)
+                try
                 {
-                    buffer[0] = 2;
-                    buffer[1] = 0x10;
-                    buffer[2] = 0;
-                    buffer[3] = 84;
-                }
+                    serialPort.Open(_serialportname);
 
-                if (Convert.ToInt32(amountOfCortex) > 1)
+                    if (Convert.ToInt32(amountOfCortex) > 0)
+                    {
+                        buffer[0] = 2;
+                        buffer[1] = 0x10;
+                        buffer[2] = 0;
+                        buffer[3] = 84;
+                    }
+
+                    if (Convert.ToInt32(amountOfCortex) > 1)
+                    {
+                        buffer[256] = 2;
+                        buffer[257] = 0x30;
+                        buffer[258] = 0;
+                        buffer[259] = 84;
+                    }
+
+                    if (Convert.ToInt32(amountOfCortex) > 2)
+                    {
+                        buffer[512] = 2;
+                        buffer[513] = 0x50;
+                        buffer[514] = 0;
+                        buffer[515] = 84;
+                    }
+
+                    if (Convert.ToInt32(amountOfCortex) > 3)
+                    {
+                        buffer[768] = 2;
+                        buffer[769] = 0x70;
+                        buffer[770] = 0;
+                        buffer[771] = 84;
+                    }
+
+                    serialPort.Send(buffer);
+
+                    theData = ProcessRefresh();
+
+                    context.Response.ContentLength64 = theData.Length;
+                    context.Response.ContentType = "text/xml";
+                    writer.Write(theData);
+                    writer.Flush();
+
+                }
+                catch (Exception e)
                 {
-                    buffer[256] = 2;
-                    buffer[257] = 0x30;
-                    buffer[258] = 0;
-                    buffer[259] = 84;
+                    MessageBox.Show("GET failed :" + e.Message);
                 }
-
-                if (Convert.ToInt32(amountOfCortex) > 2)
+                finally
                 {
-                    buffer[512] = 2;
-                    buffer[513] = 0x50;
-                    buffer[514] = 0;
-                    buffer[515] = 84;
+                    writer.Close();
+                    context.Response.Close();
+                    serialPort.Close();
                 }
-
-                if (Convert.ToInt32(amountOfCortex) > 3)
-                {
-                    buffer[768] = 2;
-                    buffer[769] = 0x70;
-                    buffer[770] = 0;
-                    buffer[771] = 84;
-                }
-
-                serialPort.Send(buffer);
-
-                theData = ProcessRefresh();
-                
-                context.Response.ContentLength64 = theData.Length;
-                context.Response.ContentType = "text/xml";
-                writer.Write(theData);
-                writer.Flush();
-                writer.Close();
-                context.Response.Close();
-
-                serialPort.Close();
 
             }
-
             else if (context.Request.HttpMethod == "POST")
             {
 
-                if (Convert.ToInt32(amountOfCortex) > 0)
+                try
                 {
-                    buffer[0] = 1;
-                    buffer[1] = 0x20;
-                    buffer[2] = 0;
-                    buffer[3] = 84;
-                }
+                    if (Convert.ToInt32(amountOfCortex) > 0)
+                    {
+                        buffer[0] = 1;
+                        buffer[1] = 0x20;
+                        buffer[2] = 0;
+                        buffer[3] = 84;
+                    }
 
-                if (Convert.ToInt32(amountOfCortex) > 1)
+                    if (Convert.ToInt32(amountOfCortex) > 1)
+                    {
+                        buffer[256] = 1;
+                        buffer[257] = 0x40;
+                        buffer[258] = 0;
+                        buffer[259] = 84;
+                    }
+
+                    if (Convert.ToInt32(amountOfCortex) > 2)
+                    {
+                        buffer[512] = 1;
+                        buffer[513] = 0x60;
+                        buffer[514] = 0;
+                        buffer[515] = 84;
+                    }
+
+                    if (Convert.ToInt32(amountOfCortex) > 3)
+                    {
+                        buffer[768] = 1;
+                        buffer[769] = 0x80;
+                        buffer[770] = 0;
+                        buffer[771] = 84;
+                    }
+
+                    ProcessUpdate(context.Request.InputStream);
+
+                    serialPort.Open(_serialportname);
+                    serialPort.Send(buffer);
+
+                    context.Response.ContentType = "text/xml";
+                    context.Response.StatusCode = 200;
+                    context.Response.ContentLength64 = 0;
+                    context.Response.AddHeader("status", "done");
+                    context.Response.OutputStream.Write(buffer, 0, 0);
+                }
+                catch (Exception e)
                 {
-                    buffer[256] = 1;
-                    buffer[257] = 0x40;
-                    buffer[258] = 0;
-                    buffer[259] = 84;
+                    MessageBox.Show("POST failed :" + e.Message);
                 }
-
-                if (Convert.ToInt32(amountOfCortex) > 2)
+                finally
                 {
-                    buffer[512] = 1;
-                    buffer[513] = 0x60;
-                    buffer[514] = 0;
-                    buffer[515] = 84;
+                    serialPort.Close();
                 }
-
-                if (Convert.ToInt32(amountOfCortex) > 3)
-                {
-                    buffer[768] = 1;
-                    buffer[769] = 0x80;
-                    buffer[770] = 0;
-                    buffer[771] = 84;
-                }
-
-                ProcessUpdate(context.Request.InputStream);
-
-                
-                serialPort.Open(_serialportname);
-                serialPort.Send(buffer);
-
-                context.Response.ContentType = "text/xml";
-                context.Response.StatusCode = 200;
-                context.Response.ContentLength64 = 0;
-                context.Response.AddHeader("status", "done");
-                context.Response.OutputStream.Write(buffer, 0, 0);
-                
-
-                serialPort.Close();
             }
  
         }

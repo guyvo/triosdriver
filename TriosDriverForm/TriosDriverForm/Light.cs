@@ -28,6 +28,12 @@ namespace TriosDriverForm
     {
        
         private string _name="CORTEX";
+        private ushort _tempsensor;
+        private ushort _watchdog;
+        private ushort _toggle;
+        private ushort _dimmer;
+        private ushort _hours;
+        private ushort _masks;
        
         // This attribute enables the ArrayList to be serialized:
         [System.Xml.Serialization.XmlArray("Lights")]
@@ -63,7 +69,85 @@ namespace TriosDriverForm
                 _name = value;
             }
 
-        }        
+        }
+        
+        [XmlAttribute ( "SENSOR" )]
+        public ushort tempsensor
+        {
+           get
+            {
+                return _tempsensor;
+            }
+            set
+            {
+                _tempsensor = value;
+            }
+        }
+
+        [XmlAttribute( "WATCHDOG" )]
+        public ushort watchdog
+        {
+            get
+            {
+                return _watchdog;
+            }
+            set
+            {
+                _watchdog = value;
+            }
+        }
+
+        [XmlAttribute( "TOGGLE" )]
+        public ushort toggle
+        {
+            get
+            {
+                return _toggle;
+            }
+            set
+            {
+                _toggle = value;
+            }
+        }
+
+        [XmlAttribute( "DIMMER" )]
+        public ushort dimmer
+        {
+            get
+            {
+                return _dimmer;
+            }
+            set
+            {
+                _dimmer = value;
+            }
+        }
+
+        [XmlAttribute( "HOURS" )]
+        public ushort hours
+        {
+            get
+            {
+                return _hours;
+            }
+            set
+            {
+                _hours = value;
+            }
+        }
+
+        [XmlAttribute( "MASKS" )]
+        public ushort masks
+        {
+            get
+            {
+                return _masks;
+            }
+            set
+            {
+                _masks = value;
+            }
+        }
 
     }
 

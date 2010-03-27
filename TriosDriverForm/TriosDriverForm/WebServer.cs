@@ -26,15 +26,30 @@ namespace TriosDriverForm
 
         public WebServer(string port)
         {
-            this._httpListener = new HttpListener();
-            _httpListener.Prefixes.Add("http://*:" + port + "/");
-            myLog = new FileStream(".\\serverlog.log", FileMode.Append, FileAccess.Write);
-            writeLog = new StreamWriter(myLog);
+            try
+            {
+                this._httpListener = new HttpListener();
+                _httpListener.Prefixes.Add("http://*:" + port + "/");
+                myLog = new FileStream(".\\serverlog.log", FileMode.Append, FileAccess.Write);
+                writeLog = new StreamWriter(myLog);
+            }
+            catch (IOException e)
+            {
+                MessageBox.Show(e.Message);
+                myLog.Close();
+            }
         }
 
         public void Start() {
-            _httpListener.Start();
-            System.Threading.ThreadPool.QueueUserWorkItem(listen);
+            try
+            {
+                _httpListener.Start();
+                System.Threading.ThreadPool.QueueUserWorkItem(listen);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);     
+            }
         }
 
         public void Stop() {
@@ -218,6 +233,7 @@ namespace TriosDriverForm
 
                 ProcessUpdate(context.Request.InputStream);
 
+                
                 serialPort.Open(_serialportname);
                 serialPort.Send(buffer);
 
@@ -286,6 +302,13 @@ namespace TriosDriverForm
                 cortex[c].addLight(new Light("OUT5", vals));
                 Buffer.BlockCopy(buffer, 64 + idx, vals, 0, 12);
                 cortex[c].addLight(new Light("OUT6", vals));
+                Buffer.BlockCopy(buffer, 76 + idx, vals, 0, 12);
+                cortex[c].tempsensor = vals[0];
+                cortex[c].watchdog = vals[1];
+                cortex[c].toggle = vals[2];
+                cortex[c].dimmer = vals[3];
+                cortex[c].hours = vals[4];
+                cortex[c].masks = vals[5];
             }
         
             XmlSerializer xmlModel = new XmlSerializer(typeof(TriosModel));
@@ -325,6 +348,16 @@ namespace TriosDriverForm
 
                     Buffer.BlockCopy(vals, 0, buffer, 4 + (i * 12) + idx , 12);
                 }
+
+                vals[0] = name.tempsensor;
+                vals[1] = name.watchdog;
+                vals[2] = name.toggle;
+                vals[3] = name.dimmer;
+                vals[4] = name.hours;
+                vals[5] = name.masks;
+
+                Buffer.BlockCopy(vals, 0, buffer, 76, 12);
+
             }
             
         }

@@ -49,7 +49,7 @@
             this.textComPort.Name = "textComPort";
             this.textComPort.Size = new System.Drawing.Size(39, 20);
             this.textComPort.TabIndex = 5;
-            this.textComPort.Text = "COM3";
+            this.textComPort.Text = "COM5";
             this.textComPort.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // textTCPPort
@@ -58,7 +58,7 @@
             this.textTCPPort.Name = "textTCPPort";
             this.textTCPPort.Size = new System.Drawing.Size(38, 20);
             this.textTCPPort.TabIndex = 6;
-            this.textTCPPort.Text = "8080";
+            this.textTCPPort.Text = "60000";
             this.textTCPPort.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
             // TriosDriverGui

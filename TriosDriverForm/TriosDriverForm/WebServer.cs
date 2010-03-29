@@ -36,9 +36,6 @@ namespace TriosDriverForm
             catch (IOException e)
             {
                 MessageBox.Show(e.Message);
-            }
-            finally
-            {
                 myLog.Close();
             }
         }
@@ -51,6 +48,7 @@ namespace TriosDriverForm
             }
             catch (Exception e)
             {
+                _httpListener.Close();
                 MessageBox.Show(e.Message);     
             }
         }
@@ -381,7 +379,7 @@ namespace TriosDriverForm
                 vals[4] = name.hours;
                 vals[5] = name.masks;
 
-                Buffer.BlockCopy(vals, 0, buffer, 76, 12);
+                Buffer.BlockCopy(vals, 0, buffer, 76 + idx, 12);
 
             }
             
